@@ -18,4 +18,11 @@
 # Will be kept in sync via CI/CD ( details at boom-lab/crocolaketools#52 and
 # boom-lab/crocolakeloader#9).
 
-databases = ["ARGO", "GLODAP", "SprayGliders", "CPR", "Saildrones", "OleanderXBT"]
+databases = [
+    "ARGO",
+    "GLODAP", 
+    "SprayGliders", 
+    "CPR", 
+    "Saildrones", 
+    "OleanderXBT"
+]
