@@ -16,15 +16,18 @@ import copy
 #------------------------------------------------------------------------------#
 #
 # List of databases and their folder names
-databases = ["ARGO", "GLODAP", "SprayGliders", "CPR"]
+databases = ["ARGO", "GLODAP", "SprayGliders", "CPR", "Saildrones", "OleanderXBT"]
 
 databases_codenames = {}
 databases_codenames["ARGO"] = "ARGO" #"ARGO-CLOUD"
 databases_codenames["GLODAP"] = "GLODAP"#"GLODAP-DEV"
 databases_codenames["SprayGliders"] = "SPRAY"#"SPRAY-DEV"
 databases_codenames["CPR"] = "CPR"#"SPRAY-DEV"
+databases_codenames["Saildrones"] = "SAILDRONES"#"SAILDRONES-DEV"
+databases_codenames["OleanderXBT"] = "OLEANDER"#"OLEANDER-DEV"
 
 params = {}
+units  = {}
 
 #------------------------------------------------------------------------------#
 # CROCOLAKE
@@ -41,8 +44,9 @@ params = {}
 params["CROCOLAKE_PHY_QC"] = [
     'DB_NAME',
     'PLATFORM_NUMBER',
-    'N_PROF',
+    'CYCLE_NUMBER',
     'DATA_MODE',
+    'DATE_UPDATE',
     'LATITUDE',
     'LONGITUDE',
     'JULD',
@@ -61,8 +65,9 @@ params["CROCOLAKE_PHY_QC"] = [
 params["CROCOLAKE_PHY_ALL"] = [
     'DB_NAME',
     'PLATFORM_NUMBER',
-    'N_PROF',
+    'CYCLE_NUMBER',
     'DATA_MODE',
+    'DATE_UPDATE',
     'LATITUDE',
     'LONGITUDE',
     'JULD',
@@ -87,7 +92,8 @@ params["CROCOLAKE_PHY_ALL"] = [
 params["CROCOLAKE_BGC_QC"] = [
     'DB_NAME',
     'PLATFORM_NUMBER',
-    'N_PROF',
+    'CYCLE_NUMBER',
+    'DATE_UPDATE',
     'LATITUDE',
     'LONGITUDE',
     'JULD',
@@ -249,7 +255,8 @@ params["CROCOLAKE_BGC_QC"] = [
 params["CROCOLAKE_BGC_ALL"] = [
     'DB_NAME',
     'PLATFORM_NUMBER',
-    'N_PROF',
+    'CYCLE_NUMBER',
+    'DATE_UPDATE',
     'LATITUDE',
     'LONGITUDE',
     'JULD',
@@ -467,6 +474,49 @@ params["CROCOLAKE_BGC_ALL"] = [
 ]
 
 #------------------------------------------------------------------------------#
+# Units map
+
+units["CROCOLAKE_UNITS"] = {
+    'DB_NAME': '-',
+    'PLATFORM_NUMBER': '-',
+    'CYCLE_NUMBER': '-',
+    'LATITUDE': 'degrees_north',
+    'LONGITUDE': 'degrees_east',
+    'JULD': 'days since 1950-01-01 00:00:00 UTC',
+    'DEPTH': 'meters',
+    'PRES': 'decibar',
+    'TEMP': 'degree_Celsius',
+    'PSAL': 'PSU',
+    'DOXY': 'micromole/kg',
+    'BBP': 'm^-1',
+    'TURBIDITY': 'NTU',
+    'CP': 'm^-1',
+    'CHLA': 'micrograms/m^3',
+    'CDOM': 'ppb',
+    'NITRATE': 'micromole/kg',
+    'BISULFIDE': 'micromole/kg',
+    'PH_IN_SITU_TOTAL': '-',
+    'DOWN_IRRADIANCE': 'W/m^2/nm',
+    'UP_IRRADIANCE': 'W/m^2/nm',
+    'DOWNWELLING_PAR': 'microMoleQuanta/m^2/s',
+    'SILICATE': 'micromole/kg',
+    'PHOSPHATE': 'micromole/kg',
+    'TCO2': 'micromole/kg',
+    'TOT_ALKALINITY': 'micromole/kg',
+    'CFC11': 'picomole/kg',
+    'CFC12': 'picomole/kg',
+    'CFC113': 'picomole/kg',
+    'CCL4': 'picomole/kg',
+    'SF6': 'femtomole/kg',
+    'QC': '-',
+    'DATA_MODE': '-',
+    'ABS_SAL_COMPUTED': 'PSU',
+    'CONSERVATIVE_TEMP_COMPUTED': 'degree_Celsius',
+    'SIGMA1_COMPUTED': 'kg/m^3',
+}
+
+
+#------------------------------------------------------------------------------#
 # GLODAP
 #
 # original names of parameters to keep
@@ -534,6 +584,10 @@ params["GLODAP2CROCOLAKE"] = {
     'G2ccl4f' : 'CCL4_QC',
     'G2sf6f' : 'SF6_QC',
     'G2chlaf' : 'CHLA_QC',
+    'profile_nb' : 'CYCLE_NUMBER', # temporary name for profile ID, this is
+                                   # created in the converter, it is not in the
+                                   # original csv file
+    'date_update' : 'DATE_UPDATE', # temporary name for date update
 }
 
 #------------------------------------------------------------------------------#
@@ -562,7 +616,7 @@ params['SprayGliders'] = [
 #
 params["SprayGliders2CROCOLAKE"] = {
     'mission' : 'PLATFORM_NUMBER',
-    'profile': 'N_PROF',
+    'profile': 'CYCLE_NUMBER',
     'depth': 'DEPTH',
     'lat' : 'LATITUDE',
     'lon' : 'LONGITUDE',
@@ -573,6 +627,7 @@ params["SprayGliders2CROCOLAKE"] = {
     'time': 'JULD',
     'chlorophyll_a' : 'CHLA',
     'doxy' : 'DOXY',
+    'date_update' : 'DATE_UPDATE', # temporary name for date update
 }
 
 params["CROCOLAKE2SprayGliders"] = {v: k for k, v in
@@ -604,12 +659,201 @@ params["CPR2CROCOLAKE"] = {
     'MidPoint_Date_UTC' : 'JULD'
 }
 
+#------------------------------------------------------------------------------#
+# CPR (Continuous Plankton Recorder)
+#
+# original names of parameters to keep
+
+params['CPR'] = [
+    'SampleId',
+    'Latitude',
+    'Longitude',
+    'MidPoint_Date_UTC',
+    'Year',
+    'Month',
+    'Day',
+    'Hour'
+]
+
+#
+# dict for renaming parameters to crocolake names
+#
+params["CPR2CROCOLAKE"] = {
+    'SampleId' : 'PLATFORM_NUMBER',
+    'Latitude' : 'LATITUDE',
+    'Longitude' : 'LONGITUDE',
+    'MidPoint_Date_UTC' : 'JULD'
+}
+
+
+#------------------------------------------------------------------------------#
+# Saildrones
+#
+# original names of parameters to keep
+#
+params["Saildrones"] = [
+    'wmo_id',
+    'latitude',
+    'longitude',
+    'time',
+    'TEMP_SBE37_MEAN',
+    'TEMP_CTD_MEAN',
+    'TEMP_CTD_RBR_MEAN',
+    'TEMP_DEPTH_HALFMETER_MEAN',
+    'SAL_SBE37_MEAN',
+    'SAL_RBR_MEAN',
+    'SAL_MEAN',
+    'O2_CONC_SBE37_MEAN',
+    'O2_CONC_MEAN',
+    'O2_CONC_UNCOR_MEAN',
+    'O2_RBR_CONC_MEAN',
+    'O2_CONC_RBR_MEAN',
+    'O2_AANDERAA_CONC_UNCOR_MEAN',
+    'O2_CONC_AANDERAA_MEAN',
+    'CHLOR_WETLABS_MEAN',
+    'CHLOR_RBR_MEAN',
+    'CHLOR_MEAN',
+    'CDOM_MEAN',
+    'BKSCT_RED_MEAN',
+    'TEMP_SBE37_STDDEV',
+    'TEMP_CTD_STDDEV',
+    'TEMP_DEPTH_HALFMETER_STDDEV',
+    'SAL_SBE37_STDDEV',
+    'SAL_RBR_STDDEV',
+    'SAL_STDDEV',
+    'O2_CONC_SBE37_STDDEV',
+    'O2_CONC_STDDEV',
+    'O2_CONC_UNCOR_STDDEV',
+    'O2_RBR_CONC_STDDEV',
+    'O2_CONC_RBR_STDDEV',
+    'O2_AANDERAA_CONC_UNCOR_STDDEV',
+    'O2_CONC_AANDERAA_STDDEV',
+    'CHLOR_WETLABS_STDDEV',
+    'CHLOR_RBR_STDDEV',
+    'CHLOR_STDDEV',
+    'CDOM_STDDEV',
+    'BKSCT_RED_STDDEV',
+]
+
+#
+# dict for renaming parameters to crocolake names
+#
+params["Saildrones2CROCOLAKE"] = {
+    'wmo_id': 'PLATFORM_NUMBER',
+    'latitude': 'LATITUDE',
+    'longitude': 'LONGITUDE',
+    'time': 'JULD',
+    'depth': 'DEPTH',
+    'TEMP_CTD_MEAN': 'TEMP',
+    'TEMP_CTD_RBR_MEAN': 'TEMP',
+    'TEMP_SBE37_MEAN': 'TEMP',
+    'TEMP_DEPTH_HALFMETER_MEAN': 'TEMP',
+    'SAL_SBE37_MEAN': 'PSAL',
+    'SAL_RBR_MEAN': 'PSAL',
+    'SAL_MEAN': 'PSAL',
+    'O2_CONC_SBE37_MEAN': 'DOXY',
+    'O2_CONC_MEAN': 'DOXY',
+    'O2_CONC_UNCOR_MEAN': 'DOXY',
+    'O2_RBR_CONC_MEAN': 'DOXY',
+    'O2_CONC_RBR_MEAN': 'DOXY',
+    'O2_AANDERAA_CONC_UNCOR_MEAN': 'DOXY',
+    'O2_CONC_AANDERAA_MEAN': 'DOXY',
+    'CHLOR_WETLABS_MEAN': 'CHLA',
+    'CHLOR_RBR_MEAN': 'CHLA',
+    'CHLOR_MEAN': 'CHLA',
+    'CDOM_MEAN': 'CDOM',
+    'BKSCT_RED_MEAN': 'BBP700',
+    'TEMP_SBE37_STDDEV': 'TEMP_ERROR',
+    'TEMP_DEPTH_HALFMETER_STDDEV': 'TEMP_ERROR',
+    'TEMP_CTD_STDDEV': 'TEMP_ERROR',
+    'TEMP_CTD_RBR_STDDEV': 'TEMP_ERROR',
+    'SAL_SBE37_STDDEV': 'PSAL_ERROR',
+    'SAL_RBR_STDDEV': 'PSAL_ERROR',
+    'SAL_STDDEV': 'PSAL_ERROR',
+    'O2_CONC_SBE37_STDDEV': 'DOXY_ERROR',
+    'O2_CONC_STDDEV': 'DOXY_ERROR',
+    'O2_CONC_UNCOR_STDDEV': 'DOXY_ERROR',
+    'O2_RBR_CONC_STDDEV': 'DOXY_ERROR',
+    'O2_CONC_RBR_STDDEV': 'DOXY_ERROR',
+    'O2_AANDERAA_CONC_UNCOR_STDDEV': 'DOXY_ERROR',
+    'O2_CONC_AANDERAA_STDDEV': 'DOXY_ERROR',
+    'CHLOR_WETLABS_STDDEV': 'CHLA_ERROR',
+    'CHLOR_RBR_STDDEV': 'CHLA_ERROR',
+    'CHLOR_STDDEV': 'CHLA_ERROR',
+    'CDOM_STDDEV': 'CDOM_ERROR',
+    'BKSCT_RED_STDDEV': 'BBP700_ERROR',
+}
+
+params["CROCOLAKE2Saildrones"] = {v: k for k, v in 
+                                  params["Saildrones2CROCOLAKE"].items()}
+
+#
+# Saildrones data doesn't include a dedicated depth variable.
+# depths are inferred from metadata associated with specific sensor variables.
+#
+
+params["Saildrones_depth_map"] = {
+    "TEMP_CTD_MEAN":               0.6,
+    "TEMP_CTD_RBR_MEAN":           0.53,
+    "TEMP_SBE37_MEAN":             1.7,
+    "TEMP_DEPTH_HALFMETER_MEAN":   0.5,
+    "O2_CONC_MEAN":                0.6,
+    "O2_RBR_CONC_MEAN":            0.53,
+    "O2_CONC_RBR_MEAN":            0.53,
+    "O2_CONC_SBE37_MEAN":          1.7,
+    "O2_CONC_UNCOR_MEAN":          0.6,
+    "O2_AANDERAA_CONC_UNCOR_MEAN": 0.6,
+    "O2_CONC_AANDERAA_MEAN":       0.6,
+    "SAL_MEAN":                    0.6,
+    "SAL_RBR_MEAN":                0.53,
+    "SAL_SBE37_MEAN":              1.7,
+    "CHLOR_MEAN":                  0.25,
+    "CHLOR_RBR_MEAN":              0.53,
+    "CHLOR_WETLABS_MEAN":          1.9,
+    "CDOM_MEAN":                   1.9,
+    "BKSCT_RED_MEAN":              1.9,
+}
+
+# Add corresponding _STDDEV variables with same depths
+params["Saildrones_depth_map"].update({k.replace("_MEAN", "_STDDEV"): v for k, v in 
+                                       params["Saildrones_depth_map"].items() if "_MEAN" in k})
+
+#------------------------------------------------------------------------------#
+# OleanderXBT
+#
+# original names of parameters to keep
+#
+
+params["OleanderXBT"] = [
+    'trajectory',
+    'profile',
+    'latitude',
+    'longitude',
+    'time',
+    'depth',
+    'temp',
+]
+
+#
+# dict for renaming parameters to crocolake names
+#
+params["OleanderXBT2CROCOLAKE"] = {
+    'trajectory' : 'PLATFORM_NUMBER',
+    'profile' : 'CYCLE_NUMBER',
+    'latitude' : 'LATITUDE',
+    'longitude' : 'LONGITUDE',
+    'time' : 'JULD',
+    'depth' : 'DEPTH',
+    'temp' : 'TEMP',
+}
+
 
 #------------------------------------------------------------------------------#
 # Argo
 #
 # standardized names for Argo only databases, when converting from GDAC
 #
+
 params["ArgoPHY"] = [
     'PLATFORM_NUMBER',
     'N_PROF',
@@ -617,6 +861,7 @@ params["ArgoPHY"] = [
     'CYCLE_NUMBER',
     'DIRECTION',
     'DATA_MODE',
+    'DATE_UPDATE',
     'LATITUDE',
     'LONGITUDE',
     'POSITION_QC',
@@ -645,6 +890,7 @@ params["ArgoBGC"] = [
     'N_LEVELS',
     'CYCLE_NUMBER',
     'DIRECTION',
+    'DATE_UPDATE',
     'LATITUDE',
     'LONGITUDE',
     'POSITION_QC',

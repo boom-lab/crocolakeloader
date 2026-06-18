@@ -348,6 +348,7 @@ class Loader:
 
         # Add database name column if missing
         if "DB_NAME" in cols_to_add:
+            col = "DB_NAME"
             print(f"Adding {col} to db {db_name}")
             ddf = ddf.map_partitions(
                 assign_DB_NAME, col
@@ -366,9 +367,10 @@ class Loader:
             if target_schema is not None:
                 field_idx = target_schema.get_field_index(col)
                 pa_dtype = target_schema.types[field_idx]
+                print(f"Column {col} has dtype {pa_dtype} in target schema.")
                 pd_dtype = self.dtype_mapping[pa_dtype]
-                if ddf.dtypes[col] != pd_dtype:
-                    ddf[col] = ddf[col].astype(pd_dtype)
+                print(f"Enforcing dtype {pd_dtype} for column {col} in db {db_name}")
+                ddf[col] = ddf[col].astype(pd_dtype)
 
         # Enforce column ordering
         print(f"Enforcing columns ordering in db {db_name}")
@@ -426,10 +428,6 @@ class Loader:
             ]
 
         self.filters = filters
-        # self.filters = self.__validate_filters(
-        #     filters,
-        #     self.selected_variables
-        # )
 
 #------------------------------------------------------------------------------#
 ## Get dataframes
@@ -464,6 +462,60 @@ class Loader:
                 return ddf.compute()
 
         return ddf
+
+#------------------------------------------------------------------------------#
+## Add units for each field in the schema
+    def add_units_to_schema(self):
+
+        if self.global_schema is None:
+            raise ValueError("Global schema is not defined. Please call __build_global_schema() first.")
+
+        schema = self.global_schema
+
+        reference_units = params.units["CROCOLAKE_UNITS"]
+
+        fields_with_units = []
+
+        for field in schema:
+
+            units = None
+            if "QC" in field.name:
+                units = reference_units["QC"]
+            elif "DATA_MODE" in field.name:
+                units = reference_units["DATA_MODE"]
+            else:
+                # get reference name (some units correspond to multiple fields, i.e.
+                # BBP has BBP_470, BBP 532, etc.)
+                if field.name in reference_units.keys():
+                    ref_name = field.name
+                else:
+                    for key in reference_units.keys():
+                        if key in field.name:
+                            ref_name = key
+                            break
+
+                # get units
+                if ref_name in reference_units.keys():
+                    units = reference_units[ref_name]
+                else:
+                    raise ValueError(f"Units for field {field.name} not found in reference units dictionary.")
+
+            # assign units to metadata
+            if units is None:
+                warnings.warn(f"No units found for field {field.name}. Assigning 'unknown' as unit.")
+                units = "unknown"
+
+            f = pa.field(
+                field.name,
+                field.type,
+                metadata={"units": units}
+            )
+
+            fields_with_units.append(f)
+
+        self.global_schema = pa.schema(fields_with_units)
+
+        return
 
 ##########################################################################
 if __name__ == '__main__':
