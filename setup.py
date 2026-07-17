@@ -15,6 +15,13 @@ setup(
     long_description=long_description,
     author='Enrico Milanese',
     author_email='enrico.milanese@whoi.edu',
+    python_requires='>=3.9,<3.13',
+    classifiers=[
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+    ],
     packages=find_packages(),
     install_requires=parse_requirements('requirements.txt'),
     entry_points={
